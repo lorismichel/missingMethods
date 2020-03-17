@@ -160,6 +160,7 @@ class Imputation:
                 A_2 = np.square(A)
                 A_3 = A_2*A
                 A = np.vstack((A,A_2, A_3)).T
+                A_obs = A
                 # check if missing values present
                 if y_mis.size == 0:
                     logging.info(f'variable {varname} does not have missing values. skip ...')
