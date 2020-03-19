@@ -19,8 +19,8 @@ class anchorRegression:
     def fit(self,X,Y,A):
         PiA = np.dot(np.dot(A, np.linalg.inv(np.dot(np.transpose(A),A))), np.transpose(A))
         H = np.diag(np.ones(np.shape(PiA)[0])) + (np.sqrt(self.tradeoff_param)-1)*PiA
-        Ytilda = np.dot(H,np.transpose(Y))
-        Xtilda = np.dot(H, X)
+        Ytilda = np.matmul(H,np.transpose(Y))
+        Xtilda = np.matmul(H, X)
         fit = LinearRegression(fit_intercept="false").fit(Xtilda,Ytilda)
         self.coefs = fit.coef_
         
