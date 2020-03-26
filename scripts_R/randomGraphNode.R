@@ -15,7 +15,9 @@
 #     -    -    |
 #     1    2    3
 
-
+# plan:
+# 1) find a good name for the method --> indicate a name for the package: torus
+# 2) create package torus
 
 ############################ torus graph
 
@@ -165,8 +167,8 @@ mean((preds_lm_pi - Xtest[,5])^2)
 mean((preds_lm_pi_na - Xtest[,5])^2)
 
 
-# - ensemble
-# - data driven selection of splits?
-# - range of applications?
-# - tuning parameters (mixture of possibilities)
-# - assumptions for the method to work
+# - ensemble (rather easy)
+# - data driven selection of splits? (rather hard)
+# - range of applications? (rather easy but time consumming)
+# - tuning parameters (mixture of possibilities) (influence of them, notation, Markovian theory requirements, CV choice?)
+# - assumptions for the method to work (missing value mechanisms)
