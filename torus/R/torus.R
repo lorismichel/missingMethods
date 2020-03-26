@@ -106,14 +106,25 @@ getSampleWeights <- function(object,
                              X, 
                              ...) {
   
-  # getting the stationary distr.
-  pi.mat <- stationaryDistr(object = object, X = X, ...)
+  l <- lapply(object, function(o) {
+    # getting the stationary distr.
+    pi.mat <- stationaryDistr(object = o, X = X, ...)
+    
+    # computing the kernel
+    w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
+    # normalizing the kernel to have empirical distributions
+    
+    return(w)
+  })
   
-  # computing the kernel
-  w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
-  # normalizing the kernel to have empirical distributions
+  w <- Reduce(l, f = function(x,y) x+y)
+  w <- w / length(l)
   w <- w / rowSums(w)
-  return(w)
+}
+
+
+combine <- function(...) {
+  return(list(...))
 }
 
 
