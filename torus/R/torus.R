@@ -27,10 +27,6 @@ extraTorus <- function(X,
   adj.mat <- as.matrix(igraph::as_adjacency_matrix(g))
 
 
-  # chain
-  p.random.nei <- 0.05 # probability of moving to a random neighbor node # p_r
-  p.staying <- 0.05 # probability of staying at the current node # p_s
-
   # randomize variables
   variable.mat <- adj.mat
   for (i in 1:nrow(adj.mat)) {
