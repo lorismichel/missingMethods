@@ -67,16 +67,21 @@ X.NA.grid <- matrix(c(-2, NA, 2, NA, NA, 0),ncol=2,byrow = T)
 
 
 # generate an extraTorus
-tor1 <- extraTorus(X = X.NA, nb.nodes = 10)
-tor2 <- extraTorus(X = X.NA, nb.nodes = 10)
+to<-c()
+B<-200
+for (b in 1:B){
+
+  to[[b]]<-extraTorus(X = X.NA, nb.nodes = 5)
+
+}
 
 
-to <- combine(tor1, tor2)
 # get weights from stationary distr
 weights <- getSampleWeights(to, X = rbind(X.NA), method="eigen")
 
 # vizu results
 X.NAtrue<-X[!complete.cases(X.NA),]
+dim(X.NAtrue)[2]
 
 par(mfrow=c(1,3))
 plot(X.NA ,pch=19)
@@ -95,7 +100,7 @@ inds_missing <-c()
 for (j in 1:d){
   inds_to_impute <- which(is.na(c(X.NA[,j]))==TRUE)
   for(k in inds_to_impute){
-    X.imputed[k,j] <- mean(weights[k,]*X.NA[,j], na.rm=T)
+    X.imputed[k,j] <- colSums(weights[k,]*X.NA, na.rm = T)[j] #mean(weights[k,]*X.NA[,j], na.rm=T)
   }
   inds_missing <- c(inds_to_impute, inds_missing)
 }
