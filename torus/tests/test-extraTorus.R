@@ -67,16 +67,11 @@ X.NA.grid <- matrix(c(-2, NA, 2, NA, NA, 0),ncol=2,byrow = T)
 
 
 # generate an extraTorus
-tor1 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor2 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor3 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor4 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor5 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor6 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor7 <- extraTorus(X = X.NA, nb.nodes = 4)
-tor8 <- extraTorus(X = X.NA, nb.nodes = 4)
+tor1 <- extraTorus(X = X.NA, nb.nodes = 10)
+tor2 <- extraTorus(X = X.NA, nb.nodes = 10)
 
-to <- combine(tor1, tor2, tor3, tor4, tor5, tor6, tor7, tor8)
+
+to <- combine(tor1, tor2)
 # get weights from stationary distr
 weights <- getSampleWeights(to, X = rbind(X.NA), method="eigen")
 
@@ -111,6 +106,18 @@ points(X.imputed[inds_missing,], col="blue", pch=19)
 
 
 
+
+## Investigate distribution for a single torus
+pi1=stationaryDistr(object = tor1, X = X.NA, method="eigen")
+par(mfrow=c(3,3))
+
+
+for (i in 1:9) {
+
+  barplot(pi1[i,], ylim=c(0,0.5), main=paste( toString(round(X[i,],3)))  )
+
+
+}
 
 
 
