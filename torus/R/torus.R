@@ -86,7 +86,7 @@ closedTree <- function(X,
   split.mat <- adj.mat
   for (i in 1:nb.no.leaves) {
     v <- variable.mat[i,adj.mat[i,]==1][1]
-    split.mat[i, adj.mat[i,]==1] <- sample(na.omit(X[,v]),1)
+    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 10)),1)
   }
   #split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
   
@@ -156,6 +156,7 @@ stationaryDistr <- function(object,
   
   if (!is.null(subset)) {
     pi.mat <- pi.mat[,subset]
+    pi.mat <- pi.mat / rowSums(pi.mat)
   }
   
   return(pi.mat)
@@ -243,6 +244,5 @@ getSampleWeights <- function(object,
 combine <- function(...) {
   return(list(...))
 }
-
 
 
