@@ -77,7 +77,7 @@ for (b in 1:B){
 
 
 # get weights from stationary distr
-weights <- getSampleWeights(to, X = rbind(X.NA), method="eigen")
+weights <- getSampleWeightsEnsemble(to, X = rbind(X.NA), method="eigen")
 
 # vizu results
 X.NAtrue<-X[!complete.cases(X.NA),]

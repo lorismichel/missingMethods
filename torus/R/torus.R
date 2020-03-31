@@ -41,8 +41,55 @@ extraTorus <- function(X,
     v <- variable.mat[i,adj.mat[i,]==1][1]
     split.mat[i, adj.mat[i,]==1] <- sample(na.omit(X[,v]),1)
   }
-  split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
+ # split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
 
+  return(list(adj.mat = adj.mat, variable.mat = variable.mat, split.mat = split.mat))
+}
+
+
+
+#' @param X a matrix n \times p with possibly missing values encoded as NA
+#' @param nb.nodes number of nodes in the torus.
+#' TODO: add the possibility to choose a decision with NA or not
+closedTree <- function(X,
+                       depth = 2) {
+  
+  if (nrow(na.omit(X))==0) {
+    stop("cannot generate a torus.")
+  }
+  
+  # creating the tree graph
+  g <- igraph::make_tree(n = 2^{depth+1}-1, mode = "out")
+  
+  # adj mat
+  adj.mat <- as.matrix(igraph::as_adjacency_matrix(g))
+  leaves <- which(apply(adj.mat,1,sum)==0)
+  a <- rbind(leaves,1)
+  a2 <- matrix(a, nrow=length(a), ncol = 1)
+  g  <- igraph::add.edges(g, a2)
+  
+  # get the adjacency matrix after pasting the leaves
+  adj.mat <- as.matrix(igraph::as_adjacency_matrix(g))
+  
+  
+  # which are not leaves
+  nb.no.leaves <- length(which(apply(adj.mat,1,sum)!=1))
+  # randomize variables
+  variable.mat <- adj.mat
+  for (i in 1:nb.no.leaves) {
+    variable.mat[i, adj.mat[i,]==1] <- sample(1:ncol(X),
+                                              1,
+                                              replace=TRUE)
+  }
+  
+  # randomize splits
+  split.mat <- adj.mat
+  for (i in 1:nb.no.leaves) {
+    v <- variable.mat[i,adj.mat[i,]==1][1]
+    split.mat[i, adj.mat[i,]==1] <- sample(na.omit(X[,v]),1)
+  }
+  #split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
+  
   return(list(adj.mat = adj.mat, variable.mat = variable.mat, split.mat = split.mat))
 }
 
@@ -55,16 +102,19 @@ stationaryDistr <- function(object,
                             X,
                             method = "power",
                             prob = c(0.05, 0.05, 1-0.05-0.05),
-                            power = 300) {
+                            power = 300,
+                            subset = NULL) {
 
   # if we have missing values, we use NA
   X[!is.finite(X)] <- NA
 
-  return(t(apply(X, 1, function(x) {
+  pi.mat <- t(apply(X, 1, function(x) {
       tr.mat <- object$adj.mat
 
+      # nb no leaves
+      nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
       # data-driven transition + random allocation
-      for (i in 1:nrow(object$adj.mat)) {
+      for (i in 1:nb.no.leaves) {
 
         # get the x value at the variable of the node
         x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
@@ -74,6 +124,13 @@ stationaryDistr <- function(object,
         tr.mat[i, object$adj.mat[i,]==1][1] <- prob[3]*ifelse(is.na(x.val), 1/2, as.numeric(cond)) + prob[2] * 1/2
         tr.mat[i, object$adj.mat[i,]==1][2] <- prob[3]*ifelse(is.na(x.val), 1/2, 1-as.numeric(cond)) + prob[2] * 1/2
       }
+      
+      if (nb.no.leaves!=nrow(tr.mat)) {
+        for (i in (nb.no.leaves+1):nrow(tr.mat)) {
+        tr.mat[i,] <- tr.mat[i,]*(prob[2]+prob[3])
+        }
+      }
+      
 
       # adding the "staying" transition
       tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
@@ -93,19 +150,67 @@ stationaryDistr <- function(object,
         }
         pi.stat <- apply(tr.mat.power, 2, mean)
       }
+      
       return(pi.stat)
-  })))
+  }))
+  
+  if (!is.null(subset)) {
+    pi.mat <- pi.mat[,subset]
+  }
+  
+  return(pi.mat)
 }
 
 
-getSampleWeights <- function(object,
+getTransitionMatrix <- function(object,
+                                x,
+                                prob = c(0.05, 0.05, 1-0.05-0.05),
+                                power = 300) {
+  
+  # if we have missing values, we use NA
+  x[!is.finite(x)] <- NA
+  
+    tr.mat <- object$adj.mat
+    
+    # nb no leaves
+    nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
+    # data-driven transition + random allocation
+    for (i in 1:nb.no.leaves) {
+      
+      # get the x value at the variable of the node
+      x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
+      # get the decision direction
+      cond <- x.val <= object$split.mat[i,object$adj.mat[i,]==1][1]
+      
+      tr.mat[i, object$adj.mat[i,]==1][1] <- prob[3]*ifelse(is.na(x.val), 1/2, as.numeric(cond)) + prob[2] * 1/2
+      tr.mat[i, object$adj.mat[i,]==1][2] <- prob[3]*ifelse(is.na(x.val), 1/2, 1-as.numeric(cond)) + prob[2] * 1/2
+    }
+    
+    if (nb.no.leaves!=nrow(tr.mat)) {
+      for (i in (nb.no.leaves+1):nrow(tr.mat)) {
+        tr.mat[i,] <- tr.mat[i,]*(prob[2]+prob[3])
+      }
+    }
+    
+    
+    # adding the "staying" transition
+    tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
+    
+    return(tr.mat)
+}
+
+
+getSampleWeightsEnsemble <- function(object,
                              X,
+                             subset = NULL,
                              ...) {
+  
+ 
 
   l <- lapply(object, function(o) {
     # getting the stationary distr.
-    pi.mat <- stationaryDistr(object = o, X = X,...)
-
+    pi.mat <- stationaryDistr(object = o, X = X, subset = subset, ...)
+      
     # computing the kernel
     w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
     # normalizing the kernel to have empirical distributions
@@ -116,6 +221,22 @@ getSampleWeights <- function(object,
   w <- Reduce(l, f = function(x,y) x+y)
   w <- w / length(l)
   w <- w / rowSums(w)
+}
+
+
+getSampleWeights <- function(object,
+                             X,
+                             subset = NULL,
+                             ...) {
+    # getting the stationary distr.
+    pi.mat <- stationaryDistr(object = object, X = X, subset = subset,...)
+    
+    
+    # computing the kernel
+    w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
+    # normalizing the kernel to have empirical distributions
+    
+    w <- w / rowSums(w)
 }
 
 
