@@ -52,7 +52,7 @@ extraTorus <- function(X,
 #' @param nb.nodes number of nodes in the torus.
 #' TODO: add the possibility to choose a decision with NA or not
 closedTree <- function(X,
-                       depth = 2) {
+                       depth = 2, type = "nested") {
   
   if (nrow(na.omit(X))==0) {
     stop("cannot generate a torus.")
@@ -71,9 +71,9 @@ closedTree <- function(X,
   # get the adjacency matrix after pasting the leaves
   adj.mat <- as.matrix(igraph::as_adjacency_matrix(g))
   
-  
   # which are not leaves
   nb.no.leaves <- length(which(apply(adj.mat,1,sum)!=1))
+
   # randomize variables
   variable.mat <- adj.mat
   for (i in 1:nb.no.leaves) {
@@ -86,7 +86,7 @@ closedTree <- function(X,
   split.mat <- adj.mat
   for (i in 1:nb.no.leaves) {
     v <- variable.mat[i,adj.mat[i,]==1][1]
-    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 10)),1)
+    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 100)),1)
   }
   #split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
   

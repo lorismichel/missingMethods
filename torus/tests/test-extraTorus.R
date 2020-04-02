@@ -125,5 +125,48 @@ for (i in 1:9) {
 }
 
 
+if (type == "nested") {
+  
+  # compute the parent node vector (only used for non-terminal node)
+  parent.nodes.vec <- apply(adj.mat, 2, function(x) which(x==1)[1])
+  
+  # this function works within a tree
+  getSamplesNode <- function(node, X) {
+    
+    # the direct parent node
+    parent.node <- parent.nodes.vec[node]
+    
+    # stopping condition
+    if (node == 1) {
+      
+      return(1:nrow(X))
+      
+    } else {
+      
+      sub <- which(apply(X, 1, function(x) {
+        
+        # does it go left or right?
+        dec <- which(node == which(ct1$adj.mat[parent.node,]==1))
+        
+        # decide
+        if (dec == 1) {
+          x[variable.mat[parent.node, which(adj.mat[parent.node,]==1)[1]]] <= split.mat[parent.node, which(adj.mat[parent.node,]==1)[1]]
+        } else {
+          x[variable.mat[parent.node, which(adj.mat[parent.node,]==1)[1]]] > split.mat[parent.node, which(ct1$adj.mat[parent.node,]==1)[1]]
+        }
+      }))
+    }
+    
+    return(intersect(sub, getSamplesNode(parent.node, X)))
+  } 
+  
+  
+  
+  
+  
+  
+}
+
+
 
 
