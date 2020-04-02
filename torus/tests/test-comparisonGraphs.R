@@ -19,7 +19,7 @@ X.NA.grid <- matrix(c(NA, -20,
 
 
 # generate an extraTorus and a closed tree
-et <- extraTorus(X = d$X.NA, nb.nodes = 4)
+et <- extraTorus(X = d$X.NA, nb.nodes = 40)
 ct <- closedTree(X = d$X.NA, depth = 4)
 
 # look at transition matrix
@@ -38,7 +38,7 @@ st_ct_all <- stationaryDistr(ct, rbind(X.NA.grid,d$X.NA), prob = prob, method = 
 st_ct_leaves  <- stationaryDistr(ct, rbind(X.NA.grid,d$X.NA), prob = prob, subset = id.leaves, method = "eigen")
 
 
-par(mfrow=c(5,3))
+par(mfrow=c(6,3))
 ## looking at the points
 for (i in 1:nrow(X.NA.grid)) {
   plot(st_et[i,],pch=19)
@@ -53,12 +53,12 @@ getTransitionMatrix(object = ct, x = c(NA,2))
 
 par(mfrow=c(3,1))
 
-ct <- closedTree(X = d$X.NA, depth = 10)
+ct <- closedTree(X = d$X.NA, depth = 4)
 et <- extraTorus(X = d$X.NA, nb.nodes = 4)
 
 prob <- c(0.0001,0.0001,1-2*0.0001)
 w_et <- getSampleWeights(et, X = rbind(X.NA.grid,d$X.NA), 
-                            prob = prob, method = "eigen")
+                            prob = prob, method = "power", power=100)
 w_ct_all <- getSampleWeights(ct, X = rbind(X.NA.grid,d$X.NA),
                              prob = prob, method = "eigen")
 w_ct_leaves <- getSampleWeights(ct, X = rbind(X.NA.grid,d$X.NA), 
