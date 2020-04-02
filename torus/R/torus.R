@@ -102,7 +102,7 @@ stationaryDistr <- function(object,
                             X,
                             method = "power",
                             prob = c(0.05, 0.05, 1-0.05-0.05),
-                            power = 300,
+                            power = 100,
                             subset = NULL) {
 
   # if we have missing values, we use NA
@@ -166,7 +166,7 @@ stationaryDistr <- function(object,
 getTransitionMatrix <- function(object,
                                 x,
                                 prob = c(0.05, 0.05, 1-0.05-0.05),
-                                power = 300) {
+                                power = 100) {
 
   # if we have missing values, we use NA
   x[!is.finite(x)] <- NA
@@ -203,6 +203,7 @@ getTransitionMatrix <- function(object,
 
 getSampleWeightsEnsemble <- function(object,
                              X,
+                             d="inner_product" ,
                              subset = NULL,
                              ...) {
 
@@ -215,8 +216,9 @@ getSampleWeightsEnsemble <- function(object,
     # computing norm
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sqrt(sum((x1-x2)^2)) ))
     # computing the kernel
-    w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2) )) #
+    #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2) )) #
     # normalizing the kernel to have empirical distributions
+    w<-distance(pi.mat , method=d)
 
     return(w)
   })
@@ -229,17 +231,25 @@ getSampleWeightsEnsemble <- function(object,
 
 getSampleWeights <- function(object,
                              X,
+                              d="inner_product" ,
                              subset = NULL,
                              ...) {
     # getting the stationary distr.
     pi.mat <- stationaryDistr(object = object, X = X, subset = subset,...)
 
 
-    # computing the kernel
-    w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
+    #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
+    w<-distance(pi.mat , method=d)
+
+
     # normalizing the kernel to have empirical distributions
 
+    #if (d=="inner_product"){
     w <- w / rowSums(w)
+    #}
+
+    return(w)
+
 }
 
 
