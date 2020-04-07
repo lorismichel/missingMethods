@@ -3,7 +3,7 @@
 # use torus package
 require(torus)
 
-d <- genData(n = 1000, dataset = "parabola", pNA = 0.05)
+d <- genData(n = 800, dataset = "parabola", pNA = 0.05)
 
 # plot the data
 plot(d$X,pch=19)
@@ -20,7 +20,7 @@ X.NA.grid <- matrix(c(NA, -1,
 
 
 # generate an extraTorus and a closed tree
-et <- extraTorus(X = d$X.NA, nb.nodes = 40)
+et <- extraTorus(X = rbind(X.NA.grid,d$X.NA), nb.nodes = 10)
 ct <- closedTree(X = d$X.NA, depth = 4)
 
 # look at transition matrix
