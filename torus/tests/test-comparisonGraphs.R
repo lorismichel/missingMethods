@@ -177,7 +177,8 @@ getSamplesNode(node = 6, X = d$X)
 get
 
 
-tt <- ranger::ranger(formula = Y~X1+X2, data = data.frame(Y=rnorm(nrow(na.omit(d$X.NA))), X1=na.omit(d$X.NA)[,1],X2=na.omit(d$X.NA)[,2]),
+tt <- ranger::ranger(formula = Y~X1+X2, data = data.frame(Y=rnorm(nrow(na.omit(d$X.NA))),
+                                                          X1=na.omit(d$X.NA)[,1],X2=na.omit(d$X.NA)[,2]),
                      splitrule =  "extratrees", quantreg = TRUE, num.random.splits = 1, max.depth = 3, num.trees = 1)
 
 tt$forest$split.varIDs
