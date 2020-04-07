@@ -3,7 +3,7 @@
 # use torus package
 require(torus)
 
-d <- genData(n = 800, dataset = "parabola", pNA = 0.05)
+d <- genData(n = 800, d=2, dataset = "bivariateGaussian", pNA = 0.05)
 
 # plot the data
 plot(d$X,pch=19)

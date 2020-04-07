@@ -112,35 +112,14 @@ stationaryDistr <- function(object,
   X[!is.finite(X)] <- NA
 
   pi.mat <- t(apply(X, 1, function(x) {
-      tr.mat <- object$adj.mat
 
-      # nb no leaves
-      nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
-      # data-driven transition + random allocation
-      for (i in 1:nb.no.leaves) {
+    tr.mat <- getTransitionMatrix(object,
+                                  x,
+                                  prob = prob,
+                                  power = power)
 
-        # get the x value at the variable of the node
-        x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
-        # get the decision direction
-        cond <- x.val <= object$split.mat[i,object$adj.mat[i,]==1][1]
-
-        tr.mat[i, object$adj.mat[i,]==1][1] <- prob[3]*ifelse(is.na(x.val), 1/2, as.numeric(cond)) + prob[2] * 1/2
-        tr.mat[i, object$adj.mat[i,]==1][2] <- prob[3]*ifelse(is.na(x.val), 1/2, 1-as.numeric(cond)) + prob[2] * 1/2
-      }
-
-      if (nb.no.leaves!=nrow(tr.mat)) {
-        for (i in (nb.no.leaves+1):nrow(tr.mat)) {
-        tr.mat[i,] <- tr.mat[i,]*(prob[2]+prob[3])
-        }
-      }
-
-
-      # adding the "staying" transition
-      tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
-
-      # getting the stationary distribution
-      if (method == "eigen") {
-
+    # getting the stationary distribution
+    if (method == "eigen") {
         e <- eigen(t(tr.mat))
         id <- which.min(abs(e$values-1))
         v <- e$vectors[,id]
@@ -174,12 +153,12 @@ getTransitionMatrix <- function(object,
   # if we have missing values, we use NA
   x[!is.finite(x)] <- NA
 
-    tr.mat <- object$adj.mat
+  tr.mat <- object$adj.mat
 
-    # nb no leaves
-    nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
+  # nb no leaves
+  nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
     # data-driven transition + random allocation
-    for (i in 1:nb.no.leaves) {
+  for (i in 1:nb.no.leaves) {
 
       # get the x value at the variable of the node
       x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
@@ -196,7 +175,6 @@ getTransitionMatrix <- function(object,
       }
     }
 
-
     # adding the "staying" transition
     tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
 
@@ -206,16 +184,15 @@ getTransitionMatrix <- function(object,
 
 getSampleWeightsEnsemble <- function(object,
                              X,
-                             d="inner_product" ,
+                             d="inner_product",
                              subset = NULL,
-                             ...) {
-
-
+                             method = "power",
+                             prob = c(0.05, 0.05, 1-0.05-0.05),
+                             power = 100) {
 
   l <- lapply(object, function(o) {
     # getting the stationary distr.
-    pi.mat <- stationaryDistr(object = o, X = X, subset = subset, ...)
-
+    pi.mat <- stationaryDistr(object = o, X = X,method=method,prob=prob, power=power,subset = subset)
 
     # computing norm
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sqrt(sum((x1-x2)^2)) ))
@@ -223,7 +200,7 @@ getSampleWeightsEnsemble <- function(object,
     # computing the kernel
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2) )) #
     # normalizing the kernel to have empirical distributions
-    w<-distance(pi.mat , method=d)
+    w <- distance(pi.mat , method=d)
 
     return(w)
   })

@@ -1,4 +1,4 @@
-genData <- function(n,d=2, dataset = "bivariateGaussian", pNA = 0.05) {
+genData <- function(n, d=2, dataset = "bivariateGaussian", pNA = 0.05) {
 
   if (dataset == "bivariateGaussian") {
     X <- MASS::mvrnorm(n = n, mu = rep(0, d),
