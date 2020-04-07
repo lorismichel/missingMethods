@@ -39,7 +39,7 @@ extraTorus <- function(X,
   split.mat <- adj.mat
   for (i in 1:nrow(adj.mat)) {
     v <- variable.mat[i,adj.mat[i,]==1][1]
-    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 500)),1)#  sample(na.omit(X[,v]),1)
+    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0.001,0.999, length.out = 500)),1)#  sample(na.omit(X[,v]),1)
   }
  # split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
 
