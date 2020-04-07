@@ -39,7 +39,7 @@ extraTorus <- function(X,
   split.mat <- adj.mat
   for (i in 1:nrow(adj.mat)) {
     v <- variable.mat[i,adj.mat[i,]==1][1]
-    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 500)),1)#  sample(na.omit(X[,v]),1)
+    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0.001,0.999, length.out = 500)),1)#  sample(na.omit(X[,v]),1)
   }
  # split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
 
@@ -71,6 +71,7 @@ closedTree <- function(X,
   # get the adjacency matrix after pasting the leaves
   adj.mat <- as.matrix(igraph::as_adjacency_matrix(g))
 
+
   # which are not leaves
   nb.no.leaves <- length(which(apply(adj.mat,1,sum)!=1))
 
@@ -86,7 +87,9 @@ closedTree <- function(X,
   split.mat <- adj.mat
   for (i in 1:nb.no.leaves) {
     v <- variable.mat[i,adj.mat[i,]==1][1]
-    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0,1, length.out = 100)),1)
+
+    split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0.01,0.99, length.out = 1000)),1)
+
   }
   #split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
 
@@ -213,8 +216,10 @@ getSampleWeightsEnsemble <- function(object,
     # getting the stationary distr.
     pi.mat <- stationaryDistr(object = o, X = X, subset = subset, ...)
 
+
     # computing norm
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sqrt(sum((x1-x2)^2)) ))
+
     # computing the kernel
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2) )) #
     # normalizing the kernel to have empirical distributions

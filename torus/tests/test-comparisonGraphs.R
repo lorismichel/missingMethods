@@ -3,23 +3,24 @@
 # use torus package
 require(torus)
 
-d <- genData(n = 1000, dataset = "parabola", pNA = 0.05)
+d <- genData(n = 800, dataset = "parabola", pNA = 0.05)
 
 # plot the data
 plot(d$X,pch=19)
 
 # grid of interesting points
-X.NA.grid <- matrix(c(NA, -20, 
-                      NA, -12, 
-                      NA, -8, 
-                      NA, -4, 
-                      NA, -1,
+
+X.NA.grid <- matrix(c(NA, -1,
+                      NA, -20,
+                      NA, -12,
+                      NA, -8,
+                      NA, -4,
                       NA, 0),ncol=2,byrow = T)
 
 
 
 # generate an extraTorus and a closed tree
-et <- extraTorus(X = d$X.NA, nb.nodes = 40)
+et <- extraTorus(X = rbind(X.NA.grid,d$X.NA), nb.nodes = 10)
 ct <- closedTree(X = d$X.NA, depth = 4)
 
 # look at transition matrix
@@ -38,11 +39,13 @@ st_ct_all <- stationaryDistr(ct, rbind(X.NA.grid,d$X.NA), prob = prob, method = 
 st_ct_leaves  <- stationaryDistr(ct, rbind(X.NA.grid,d$X.NA), prob = prob, subset = id.leaves, method = "eigen")
 
 
+
 par(mfrow=c(6,3))
+
 ## looking at the points
 for (i in 1:nrow(X.NA.grid)) {
   plot(st_et[i,],pch=19)
-  plot(st_ct_all[i,],pch=19)
+  #plot(st_ct_all[i,],pch=19)
   plot(st_ct_leaves[i,],pch=19)
 }
 
@@ -53,22 +56,30 @@ getTransitionMatrix(object = ct, x = c(NA,2))
 
 par(mfrow=c(3,1))
 
+
+
 ct <- closedTree(X = d$X.NA, depth = 4)
 et <- extraTorus(X = d$X.NA, nb.nodes = 4)
 
 prob <- c(0.0001,0.0001,1-2*0.0001)
-w_et <- getSampleWeights(et, X = rbind(X.NA.grid,d$X.NA), 
+w_et <- getSampleWeights(et, X = rbind(X.NA.grid,d$X.NA),
                             prob = prob, method = "power", power=100)
+
 w_ct_all <- getSampleWeights(ct, X = rbind(X.NA.grid,d$X.NA),
                              prob = prob, method = "eigen")
-w_ct_leaves <- getSampleWeights(ct, X = rbind(X.NA.grid,d$X.NA), 
+w_ct_leaves <- getSampleWeights(ct, X = rbind(X.NA.grid,d$X.NA),
                                 prob = prob,
                             subset = id.leaves, method = "eigen")
 
-par(mfrow=c(6,3))
+par(mfrow=c(6,1))
 ## looking at the points
 for (i in 1:nrow(X.NA.grid)) {
+  #plot(d$X.NA,pch=19)
+  #points(rbind(X.NA.grid,d$X.NA)[order(w_et[i,], decreasing = TRUE)[1:200],],col="red",pch=19)
+  #plot(d$X.NA,pch=19)
+  #points(rbind(X.NA.grid,d$X.NA)[order(w_ct_all[i,], decreasing = TRUE)[1:100],],col="red",pch=19)
   plot(d$X.NA,pch=19)
+
   points(rbind(X.NA.grid,d$X.NA)[order(w_et[i,], decreasing = TRUE)[1:100],],col="red",pch=19)
   plot(d$X.NA,pch=19)
   points(rbind(X.NA.grid,d$X.NA)[order(w_ct_all[i,], decreasing = TRUE)[1:100],],col="red",pch=19)
@@ -103,7 +114,7 @@ ct4 <- closedTree(X = X.NA, depth = 3)
 ct5 <- closedTree(X = X.NA, depth = 3)
 
 f <- combine(ct1,ct2,ct3,ct4,ct5)
-w_f <- getSampleWeightsEnsemble(f, X = rbind(X.NA.grid,X.NA), 
+w_f <- getSampleWeightsEnsemble(f, X = rbind(X.NA.grid,X.NA),
                          prob = c(0.005,0.005,1-2*0.005), subset = id.leaves)
 
 
@@ -124,21 +135,21 @@ dropDown <- function(ct, x) {
   path <- c()
   nb.children <- apply(ct$adj.mat,1,sum)
   cur.node <- 1
-  
+
   while(nb.children[cur.node]!=1) {
     path <- c(path,cur.node)
     next.nodes.candidates <- which(ct$adj.mat[cur.node,]==1)
     x[ct$variable.mat[i,next.nodes.candidates][1]] <= ct$split.mat[i,next.nodes.candidates[1]]
   }
-  
-  
+
+
 }
 
 parent.nodes.vec <- apply(ct1$adj.mat, 2, function(x) which(x==1)[1])
 
 # this function works within a tree
 getSamplesNode <- function(node, X) {
-  
+
   # the direct parent node
   parent.node <- parent.nodes.vec[node]
   #parent.parent.node <- parent.nodes.vec[parent.node]
@@ -154,9 +165,9 @@ getSamplesNode <- function(node, X) {
       }
     }))
   }
-  
+
   return(intersect(sub, getSamplesNode(parent.node, X)))
-} 
+}
 
 
 
@@ -166,7 +177,8 @@ getSamplesNode(node = 6, X = d$X)
 get
 
 
-tt <- ranger::ranger(formula = Y~X1+X2, data = data.frame(Y=rnorm(nrow(na.omit(d$X.NA))), X1=na.omit(d$X.NA)[,1],X2=na.omit(d$X.NA)[,2]),
+tt <- ranger::ranger(formula = Y~X1+X2, data = data.frame(Y=rnorm(nrow(na.omit(d$X.NA))),
+                                                          X1=na.omit(d$X.NA)[,1],X2=na.omit(d$X.NA)[,2]),
                      splitrule =  "extratrees", quantreg = TRUE, num.random.splits = 1, max.depth = 3, num.trees = 1)
 
 tt$forest$split.varIDs
