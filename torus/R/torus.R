@@ -41,7 +41,7 @@ extraTorus <- function(X,
     v <- variable.mat[i,adj.mat[i,]==1][1]
     split.mat[i, adj.mat[i,]==1] <- sample(quantile(na.omit(X[,v]), probs = seq(0.001,0.999, length.out = 500)),1)#  sample(na.omit(X[,v]),1)
   }
- # split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
+  # split.mat[adj.mat==1] <- sapply(variable.mat[adj.mat==1], function(v) sample(na.omit(X[,v]),1))
 
   return(list(adj.mat = adj.mat, variable.mat = variable.mat, split.mat = split.mat))
 }
@@ -106,7 +106,7 @@ stationaryDistr <- function(object,
                             method = "power",
                             prob = c(0.05, 0.05, 1-0.05-0.05),
                             power = 100,
-                            subset = NULL) {
+                            subset = FALSE) {
 
   # if we have missing values, we use NA
   X[!is.finite(X)] <- NA
@@ -120,23 +120,24 @@ stationaryDistr <- function(object,
 
     # getting the stationary distribution
     if (method == "eigen") {
-        e <- eigen(t(tr.mat))
-        id <- which.min(abs(e$values-1))
-        v <- e$vectors[,id]
-        pi.stat <- abs(v) / sum(abs(v))
-      } else {
-        tr.mat.power <- powerMat(tr.mat, power = power)
+      e <- eigen(t(tr.mat))
+      id <- which.min(abs(e$values-1))
+      v <- e$vectors[,id]
+      pi.stat <- abs(v) / sum(abs(v))
+    } else {
+      tr.mat.power <- powerMat(tr.mat, power = power)
 
-        if (any(apply(tr.mat.power, 2, sd)>=0.001)) {
-          warning("use method eigen.")
-        }
-        pi.stat <- apply(tr.mat.power, 2, mean)
+      if (any(apply(tr.mat.power, 2, sd)>=0.001)) {
+        warning("use method eigen.")
       }
+      pi.stat <- apply(tr.mat.power, 2, mean)
+    }
 
-      return(pi.stat)
+    return(pi.stat)
   }))
 
-  if (!is.null(subset)) {
+  if (subset==TRUE) {
+    subset <- which(apply(object$adj.mat,1,sum)==1)
     pi.mat <- pi.mat[,subset]
     pi.mat <- pi.mat / rowSums(pi.mat)
   }
@@ -157,38 +158,38 @@ getTransitionMatrix <- function(object,
 
   # nb no leaves
   nb.no.leaves <- length(which(apply(tr.mat, 1, sum)!=1))
-    # data-driven transition + random allocation
+  # data-driven transition + random allocation
   for (i in 1:nb.no.leaves) {
 
-      # get the x value at the variable of the node
-      x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
-      # get the decision direction
-      cond <- x.val <= object$split.mat[i,object$adj.mat[i,]==1][1]
+    # get the x value at the variable of the node
+    x.val <- x[object$variable.mat[i, object$adj.mat[i,]==1][1]]
+    # get the decision direction
+    cond <- x.val <= object$split.mat[i,object$adj.mat[i,]==1][1]
 
-      tr.mat[i, object$adj.mat[i,]==1][1] <- prob[3]*ifelse(is.na(x.val), 1/2, as.numeric(cond)) + prob[2] * 1/2
-      tr.mat[i, object$adj.mat[i,]==1][2] <- prob[3]*ifelse(is.na(x.val), 1/2, 1-as.numeric(cond)) + prob[2] * 1/2
+    tr.mat[i, object$adj.mat[i,]==1][1] <- prob[3]*ifelse(is.na(x.val), 1/2, as.numeric(cond)) + prob[2] * 1/2
+    tr.mat[i, object$adj.mat[i,]==1][2] <- prob[3]*ifelse(is.na(x.val), 1/2, 1-as.numeric(cond)) + prob[2] * 1/2
+  }
+
+  if (nb.no.leaves!=nrow(tr.mat)) {
+    for (i in (nb.no.leaves+1):nrow(tr.mat)) {
+      tr.mat[i,] <- tr.mat[i,]*(prob[2]+prob[3])
     }
+  }
 
-    if (nb.no.leaves!=nrow(tr.mat)) {
-      for (i in (nb.no.leaves+1):nrow(tr.mat)) {
-        tr.mat[i,] <- tr.mat[i,]*(prob[2]+prob[3])
-      }
-    }
+  # adding the "staying" transition
+  tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
 
-    # adding the "staying" transition
-    tr.mat <- tr.mat + prob[1]*diag(1,nrow(tr.mat),ncol(tr.mat))
-
-    return(tr.mat)
+  return(tr.mat)
 }
 
 
 getSampleWeightsEnsemble <- function(object,
-                             X,
-                             d="inner_product",
-                             subset = NULL,
-                             method = "power",
-                             prob = c(0.05, 0.05, 1-0.05-0.05),
-                             power = 100) {
+                                     X,
+                                     dist_m ="inner_product",
+                                     subset = FALSE,
+                                     method = "eigen",
+                                     prob = c(0.05, 0.05, 1-0.05-0.05),
+                                     power = 100) {
 
   l <- lapply(object, function(o) {
     # getting the stationary distr.
@@ -200,38 +201,55 @@ getSampleWeightsEnsemble <- function(object,
     # computing the kernel
     #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2) )) #
     # normalizing the kernel to have empirical distributions
-    w <- distance(pi.mat , method=d)
 
-    return(w)
+
+    w <- distance(pi.mat , method=dist_m)
+
+    return(list(w=w, pi.mat = pi.mat))
   })
 
-  w <- Reduce(l, f = function(x,y) x+y)
-  w <- w / length(l)
+  l_pi_mat <- list()
+  for (k in 1:length(l)){
+    l_pi_mat[[k]] <- l[[k]]$pi.mat
+  }
+
+  l_w_mat <- list()
+  for (k in 1:length(l)){
+    l_w_mat[[k]] <- l[[k]]$w
+  }
+
+
+  w <- Reduce(l_w_mat, f = function(x,y) x+y)
+  w <- w / length(l_w_mat)
   w <- w / rowSums(w)
+
+  pi.mat <- Reduce(l_pi_mat, f = function(x,y) x+y)
+  pi.mat <- pi.mat / length(l_pi_mat)
+  pi.mat <- pi.mat / rowSums(pi.mat)
+
+  return(list(w=w,pi.mat=pi.mat))
 }
 
 
 getSampleWeights <- function(object,
                              X,
-                              d="inner_product" ,
-                             subset = NULL,
-                             ...) {
-    # getting the stationary distr.
-    pi.mat <- stationaryDistr(object = object, X = X, subset = subset,...)
+                             dist_m="inner_product",
+                             subset = FALSE,
+                             method= "eigen",
+                             prob = c(0.05, 0.05, 1-0.05-0.05),
+                             power = 100
+){
+  # getting the stationary distr
+
+  pi.mat <- stationaryDistr(object = object, X = X, method = method, prob=prob,
+                            power=power,subset = subset)
 
 
-    #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
-    w<-distance(pi.mat , method=d)
+  #w <- apply(pi.mat, 1, function(x1) apply(pi.mat, 1, function(x2) sum(x1*x2)))
+  w <- distance(pi.mat , method=dist_m)
+  w <- w / rowSums(w)
 
-
-    # normalizing the kernel to have empirical distributions
-
-    #if (d=="inner_product"){
-    w <- w / rowSums(w)
-    #}
-
-    return(w)
-
+  return(w)
 }
 
 
