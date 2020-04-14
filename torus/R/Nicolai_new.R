@@ -33,6 +33,7 @@ inXnodes  = 0*nodestry
 for (k in 1:ncol(nodestry)){
   inXnodes[,k]  = as.numeric( nodestry[,k] %in% nodesX[,k])
 }
+
 weights = apply(inXnodes,1,sum)
 plot(tryat[,1], weights)
 ## where to cut here to get CI?? probably somewher close to 450 out of
@@ -42,7 +43,7 @@ plot(tryat[,1], weights)
 #### imbalanced? more weights on the positive side...
 dat <- data.frame(x1 = X[,1], x2 = X[,2])
 
-rf <- ranger::ranger(formula = x1~x2,data=dat, quantreg=T, num.trees = 5000, 
+rf <- ranger::ranger(formula = x1~x2,data=dat, quantreg=T, num.trees = 5000,
                      splitrule = "extratrees")
 imp <- predict(rf, data= data.frame(x2 = 0.5), type="quantiles",
                      quantiles = seq(0.1,0.9, length.out = 1000))$predictions
@@ -58,7 +59,7 @@ mean(dat$x1>=0)
 ## what is the probability that a sample from the true distribution
 ## would fall into the observed nodes nodesX in at least 1-alpha of all
 ## trees (determines cutoff needed for CI) ?
-  
+
 ## for more noisy data: might need to exclude nodes in nodesX in which
 ## only very few true observations fall and accordingly lower the
 ## thresshold for the number of trees necessary

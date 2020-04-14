@@ -24,7 +24,7 @@ X.NA.grid <- matrix(c(NA, 0,
 
 # generate an extraTorus and a closed tree
 et <- extraTorus(X = rbind(X.NA.grid,d$X.NA), nb.nodes = 10)
-ct <- closedTree(X = rbind(X.NA.grid,d$X.NA), depth = 4)
+ct <- closedTree(X = rbind(X.NA.grid,d$X.NA), depth = 6)
 
 # look at transition matrix: how close are they?
 tr1 <- getTransitionMatrix(ct, x = c(NA, 0))
